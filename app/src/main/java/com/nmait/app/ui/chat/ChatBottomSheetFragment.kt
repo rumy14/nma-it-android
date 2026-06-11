@@ -1,24 +1,17 @@
 package com.nmait.app.ui.chat
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import android.speech.RecognizerIntent
-import android.speech.tts.TextToSpeech
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import androidx.core.content.ContextCompat
 import com.nmait.app.R
+import com.nmait.app.ui.voice.VoiceChatManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,8 +21,6 @@ import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.Locale
-import android.speech.SpeechRecognizer
 
 class ChatBottomSheetFragment : BottomSheetDialogFragment() {
 
@@ -40,46 +31,31 @@ class ChatBottomSheetFragment : BottomSheetDialogFragment() {
     private lateinit var micButton: ImageButton
     private lateinit var voiceToggle: ImageButton
 
-    private var tts: TextToSpeech? = null
     private var isVoiceMode = false
     private var messageIdCounter = 0L
     private val scope = CoroutineScope(Dispatchers.Main)
-
-    // Modern Activity Result API
-    private val speechLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == android.app.Activity.RESULT_OK) {
-            val data = result.data
-            val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
-            if (!results.isNullOrEmpty()) {
-                val spokenText = results[0]
-                chatInput.setText(spokenText)
-                sendMessage(spokenText)
-                chatInput.text.clear()
-            }
-        }
-    }
-
-    private val audioPermLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            startVoiceRecognition()
-        } else {
-            Toast.makeText(requireContext(), "Microphone permission required for voice input", Toast.LENGTH_SHORT).show()
-        }
-    }
+    private lateinit var voiceManager: VoiceChatManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStyle(STYLE_NORMAL, R.style.Theme_NMAIT_BottomSheet)
+
+        // Initialize voice manager — must be in onCreate for launcher registration
+        voiceManager = VoiceChatManager(
+            fragment = this,
+            onSpeechResult = { text ->
+                if (text.isNotBlank()) {
+                    chatInput.setText(text)
+                    sendMessage(text)
+                    chatInput.text.clear()
+                }
+            },
+            onSpeechError = { error -> /* optional: show a toast */ }
+        )
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         return inflater.inflate(R.layout.fragment_chat_bottom_sheet, container, false)
     }
@@ -94,7 +70,6 @@ class ChatBottomSheetFragment : BottomSheetDialogFragment() {
         voiceToggle = view.findViewById(R.id.voiceToggle)
 
         setupRecyclerView()
-        setupTts()
         setupListeners()
     }
 
@@ -103,20 +78,11 @@ class ChatBottomSheetFragment : BottomSheetDialogFragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
 
-        // Add welcome message
         adapter.addMessage(ChatMessage(
             id = messageIdCounter++,
             content = "Hi! 👋 I'm the NMA IT sales assistant. I can help you find the right AI automation solution for your business. What are you looking to automate?",
             isUser = false
         ))
-    }
-
-    private fun setupTts() {
-        tts = TextToSpeech(requireContext()) { status ->
-            if (status != TextToSpeech.ERROR) {
-                tts?.language = Locale.US
-            }
-        }
     }
 
     private fun setupListeners() {
@@ -137,61 +103,47 @@ class ChatBottomSheetFragment : BottomSheetDialogFragment() {
             true
         }
 
+        // Mic button → voice input
         micButton.setOnClickListener {
-            if (checkPermission()) {
-                startVoiceRecognition()
-            }
+            voiceManager.requestAndListen()
         }
 
+        // Voice toggle → enables/disables TTS for responses
         voiceToggle.setOnClickListener {
             isVoiceMode = !isVoiceMode
-            val tintColor = if (isVoiceMode) {
-                ContextCompat.getColorStateList(requireContext(), R.color.primary)
+            if (isVoiceMode) {
+                voiceToggle.imageTintList = ContextCompat.getColorStateList(requireContext(), R.color.primary)
+                voiceManager.speak("Voice mode activated. I'll read responses aloud.")
             } else {
-                ContextCompat.getColorStateList(requireContext(), R.color.bottom_nav_tint)
+                voiceToggle.imageTintList = ContextCompat.getColorStateList(requireContext(), R.color.bottom_nav_tint)
+                voiceManager.stopSpeaking()
             }
-            voiceToggle.imageTintList = tintColor
         }
     }
 
     private fun sendMessage(text: String) {
         // Add user message
-        val userMsg = ChatMessage(
-            id = messageIdCounter++,
-            content = text,
-            isUser = true
-        )
-        adapter.addMessage(userMsg)
+        adapter.addMessage(ChatMessage(
+            id = messageIdCounter++, content = text, isUser = true
+        ))
         scrollToBottom()
 
-        // Read user message aloud in voice mode
         if (isVoiceMode) {
-            tts?.speak("You said: $text", TextToSpeech.QUEUE_FLUSH, null, null)
+            voiceManager.speak("You said: $text")
         }
 
         // Call API
         scope.launch {
             val reply = callChatApi(text)
-            if (reply != null) {
-                val botMsg = ChatMessage(
-                    id = messageIdCounter++,
-                    content = reply,
-                    isUser = false
-                )
-                adapter.addMessage(botMsg)
-                scrollToBottom()
+            val responseText = reply ?: "Sorry, I had trouble responding. Please try again."
 
-                // Read bot response aloud in voice mode
-                if (isVoiceMode) {
-                    tts?.speak(reply, TextToSpeech.QUEUE_FLUSH, null, null)
-                }
-            } else {
-                adapter.addMessage(ChatMessage(
-                    id = messageIdCounter++,
-                    content = "Sorry, I had trouble responding. Please try again.",
-                    isUser = false
-                ))
-                scrollToBottom()
+            adapter.addMessage(ChatMessage(
+                id = messageIdCounter++, content = responseText, isUser = false
+            ))
+            scrollToBottom()
+
+            if (isVoiceMode) {
+                voiceManager.speak(responseText)
             }
         }
     }
@@ -223,56 +175,19 @@ class ChatBottomSheetFragment : BottomSheetDialogFragment() {
                 })
             }
 
-            OutputStreamWriter(conn.outputStream).use { writer ->
-                writer.write(body.toString())
-                writer.flush()
-            }
+            OutputStreamWriter(conn.outputStream).use { it.write(body.toString()); it.flush() }
 
-            val responseCode = conn.responseCode
-            if (responseCode == 200) {
+            if (conn.responseCode == 200) {
                 val response = conn.inputStream.bufferedReader().use { it.readText() }
-                val json = JSONObject(response)
-                json.optString("reply")
-            } else {
-                null
-            }
+                JSONObject(response).optString("reply")
+            } else null
         } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            e.printStackTrace(); null
         }
-    }
-
-    private fun startVoiceRecognition() {
-        if (!SpeechRecognizer.isRecognitionAvailable(requireContext())) {
-            Toast.makeText(requireContext(), "Voice recognition not available", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now...")
-        }
-
-        speechLauncher.launch(intent)
-    }
-
-    private fun checkPermission(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ContextCompat.checkSelfPermission(
-                    requireContext(), Manifest.permission.RECORD_AUDIO
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                audioPermLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                return false
-            }
-        }
-        return true
     }
 
     override fun onDestroy() {
-        tts?.stop()
-        tts?.shutdown()
+        voiceManager.destroy()
         super.onDestroy()
     }
 

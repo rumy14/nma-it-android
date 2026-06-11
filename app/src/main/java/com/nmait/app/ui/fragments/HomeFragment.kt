@@ -21,12 +21,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         view.findViewById<View>(R.id.actionBookCall).setOnClickListener {
-            val fragment = parentFragmentManager.primaryNavigationFragment
-            val activity = activity
-            // Open the contact form externally via the website modal trigger
-            // or launch bottom sheet — for now open URL
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ai.nma-it.com/#contact"))
-            startActivity(intent)
+            (activity as? com.nmait.app.MainActivity)?.switchToTab(2)
         }
 
         view.findViewById<View>(R.id.actionChat).setOnClickListener {

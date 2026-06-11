@@ -7,10 +7,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.google.android.material.textfield.TextInputEditText
 import com.nmait.app.R
+import com.nmait.app.ui.chat.ChatBottomSheetFragment
+import com.nmait.app.ui.voice.VoiceChatManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,6 +25,25 @@ import java.net.URL
 class ContactFragment : Fragment() {
 
     private val scope = CoroutineScope(Dispatchers.Main)
+    private lateinit var voiceManager: VoiceChatManager
+    private lateinit var messageInput: EditText
+    private lateinit var formStatus: TextView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        voiceManager = VoiceChatManager(
+            fragment = this,
+            onSpeechResult = { text ->
+                messageInput.setText(messageInput.text.toString() + text + " ")
+                messageInput.setSelection(messageInput.length())
+            },
+            onSpeechError = {
+                formStatus.text = it
+                formStatus.setTextColor(0xFFEF4444.toInt())
+                formStatus.visibility = View.VISIBLE
+            }
+        )
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -33,27 +54,34 @@ class ContactFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val nameInput = view.findViewById<TextInputEditText>(R.id.nameInput)
-        val emailInput = view.findViewById<TextInputEditText>(R.id.emailInput)
-        val whatsappInput = view.findViewById<TextInputEditText>(R.id.whatsappInput)
-        val messageInput = view.findViewById<TextInputEditText>(R.id.messageInput)
+        val nameInput = view.findViewById<EditText>(R.id.nameInput)
+        val emailInput = view.findViewById<EditText>(R.id.emailInput)
+        val whatsappInput = view.findViewById<EditText>(R.id.whatsappInput)
+        messageInput = view.findViewById(R.id.messageInput)
         val sendButton = view.findViewById<Button>(R.id.sendButton)
-        val formStatus = view.findViewById<TextView>(R.id.formStatus)
+        formStatus = view.findViewById(R.id.formStatus)
 
         // Direct call
         view.findViewById<View>(R.id.actionCall).setOnClickListener {
-            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:+1234567890"))
-            startActivity(intent)
+            startActivity(Intent(Intent.ACTION_DIAL, Uri.parse("tel:+1234567890")))
         }
 
         // Direct email
         view.findViewById<View>(R.id.actionEmail).setOnClickListener {
-            val intent = Intent(Intent.ACTION_SENDTO).apply {
+            startActivity(Intent(Intent.ACTION_SENDTO).apply {
                 data = Uri.parse("mailto:rumy103040@gmail.com")
                 putExtra(Intent.EXTRA_SUBJECT, "NMA IT Automation Inquiry")
-            }
-            startActivity(intent)
+            })
         }
+
+        // Voice chat — opens the chat bottom sheet in voice mode + mic button
+        view.findViewById<View>(R.id.actionVoiceChat).setOnClickListener {
+            val bottomSheet = ChatBottomSheetFragment()
+            bottomSheet.show(parentFragmentManager, ChatBottomSheetFragment.TAG)
+        }
+
+        // Mic button on message field — voice dictation
+        // Actually we handle it via the Voice Chat button above, which gives full chat
 
         // Send form
         sendButton.setOnClickListener {
@@ -114,15 +142,15 @@ class ContactFragment : Fragment() {
                 put("message", message)
             }
 
-            OutputStreamWriter(conn.outputStream).use { writer ->
-                writer.write(body.toString())
-                writer.flush()
-            }
-
+            OutputStreamWriter(conn.outputStream).use { it.write(body.toString()); it.flush() }
             conn.responseCode == 200
         } catch (e: Exception) {
-            e.printStackTrace()
-            false
+            e.printStackTrace(); false
         }
+    }
+
+    override fun onDestroy() {
+        voiceManager.destroy()
+        super.onDestroy()
     }
 }
