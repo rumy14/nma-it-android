@@ -9,6 +9,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 
@@ -18,6 +19,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Install splash screen before super.onCreate
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
