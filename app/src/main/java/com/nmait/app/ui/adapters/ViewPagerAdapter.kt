@@ -11,7 +11,7 @@ class ViewPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activi
         Tab("Home", "https://ai.nma-it.com/"),
         Tab("Services", "https://ai.nma-it.com/services"),
         Tab("Contact", "https://ai.nma-it.com/contact"),
-        Tab("Blog", "https://ai.nma-it.com/blog")
+        Tab("Blog", "https://ai.nma-it.com/blog/")
     )
 
     override fun getItemCount(): Int = tabs.size

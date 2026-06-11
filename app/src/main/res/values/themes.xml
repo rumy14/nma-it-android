@@ -15,4 +15,16 @@
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
         <item name="postSplashScreenTheme">@style/Theme.NMAIT</item>
     </style>
+
+    <!-- Bottom sheet theme -->
+    <style name="Theme.NMAIT.BottomSheet" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">#0F172A</item>
+        <item name="bottomSheetStyle">@style/Widget.NMAIT.BottomSheet</item>
+    </style>
+
+    <style name="Widget.NMAIT.BottomSheet" parent="Widget.Material3.BottomSheet">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
 </resources>

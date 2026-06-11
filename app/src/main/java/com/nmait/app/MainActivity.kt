@@ -6,7 +6,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.nmait.app.ui.adapters.ViewPagerAdapter
+import com.nmait.app.ui.chat.ChatBottomSheetFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -57,6 +59,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         })
+
+        // Wire up chat FAB → opens native bottom sheet
+        findViewById<FloatingActionButton>(R.id.chatFab).setOnClickListener {
+            val bottomSheet = ChatBottomSheetFragment()
+            bottomSheet.show(supportFragmentManager, ChatBottomSheetFragment.TAG)
+        }
 
         // ViewPager page change → update bottom nav selection
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {

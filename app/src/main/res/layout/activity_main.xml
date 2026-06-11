@@ -24,4 +24,19 @@
         app:elevation="8dp"
         app:labelVisibilityMode="labeled" />
 
+    <!-- Chat FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/chatFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="72dp"
+        android:contentDescription="Open chat"
+        android:src="@drawable/ic_chat_fab"
+        android:backgroundTint="#2563EB"
+        app:tint="#FFFFFF"
+        app:fabSize="normal"
+        app:elevation="6dp" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
