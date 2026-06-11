@@ -37,4 +37,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.webkit:webkit:1.8.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
 }

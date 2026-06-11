@@ -1,107 +1,75 @@
 package com.nmait.app
 
-import android.graphics.Bitmap
 import android.os.Bundle
-import android.view.View
-import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.widget.ProgressBar
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.webkit.WebSettingsCompat
-import androidx.webkit.WebViewFeature
+import androidx.viewpager2.widget.ViewPager2
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.nmait.app.ui.adapters.ViewPagerAdapter
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var webView: WebView
-    private lateinit var progressBar: ProgressBar
+    private lateinit var viewPager: ViewPager2
+    private lateinit var bottomNav: BottomNavigationView
+    private lateinit var adapter: ViewPagerAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Install splash screen before super.onCreate
         installSplashScreen()
-
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        webView = findViewById(R.id.webView)
-        progressBar = findViewById(R.id.progressBar)
+        viewPager = findViewById(R.id.viewPager)
+        bottomNav = findViewById(R.id.bottomNavigation)
 
-        setupWebView()
-        loadUrl()
-    }
+        adapter = ViewPagerAdapter(this)
+        viewPager.adapter = adapter
 
-    private fun setupWebView() {
-        webView.apply {
-            settings.apply {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                loadWithOverviewMode = true
-                useWideViewPort = true
-                builtInZoomControls = true
-                displayZoomControls = false
-                setSupportZoom(true)
-                allowFileAccess = false
-                allowContentAccess = false
-                // Enable dark mode
-                if (WebViewFeature.isFeatureSupported(WebViewFeature.FORCE_DARK)) {
-                    WebSettingsCompat.setForceDark(settings, WebSettingsCompat.FORCE_DARK_ON)
-                }
+        // Disable swipe on ViewPager so tabs are nav-only (avoids accidental swipes)
+        viewPager.isUserInputEnabled = false
+
+        // Bottom nav item selection → switch ViewPager page
+        bottomNav.setOnItemSelectedListener { item ->
+            val position = when (item.itemId) {
+                R.id.nav_home -> 0
+                R.id.nav_services -> 1
+                R.id.nav_contact -> 2
+                R.id.nav_blog -> 3
+                else -> return@setOnItemSelectedListener false
             }
-
-            webViewClient = object : WebViewClient() {
-                override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-                    progressBar.visibility = View.VISIBLE
-                }
-
-                override fun onPageFinished(view: WebView?, url: String?) {
-                    progressBar.visibility = View.GONE
-                    // Prevent horizontal scrolling
-                    view?.evaluateJavascript(
-                        """
-                        (function() {
-                            document.body.style.overflowX = 'hidden';
-                            document.documentElement.style.overflowX = 'hidden';
-                            var meta = document.querySelector('meta[name="viewport"]');
-                            if (!meta) {
-                                meta = document.createElement('meta');
-                                meta.name = 'viewport';
-                                document.head.appendChild(meta);
-                            }
-                            meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
-                        })();
-                        """.trimIndent(),
-                        null
-                    )
-                }
-
-                override fun shouldOverrideUrlLoading(
-                    view: WebView?,
-                    request: WebResourceRequest?
-                ): Boolean {
-                    return false // Load all URLs within the app
-                }
-            }
-
-            webChromeClient = object : WebChromeClient() {
-                override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                    progressBar.progress = newProgress
-                }
-            }
+            viewPager.setCurrentItem(position, false)
+            true
         }
-    }
 
-    private fun loadUrl() {
-        // Load the main site
-        webView.loadUrl("https://ai.nma-it.com")
-    }
+        // Handle back — let active WebView go back first
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val fragment = supportFragmentManager
+                    .findFragmentByTag("f${viewPager.currentItem}")
+                if (fragment is com.nmait.app.ui.fragments.WebViewFragment) {
+                    if (!fragment.goBack()) {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
 
-    override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            super.onBackPressed()
-        }
+        // ViewPager page change → update bottom nav selection
+        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                val menuItemId = when (position) {
+                    0 -> R.id.nav_home
+                    1 -> R.id.nav_services
+                    2 -> R.id.nav_contact
+                    3 -> R.id.nav_blog
+                    else -> R.id.nav_home
+                }
+                bottomNav.menu.findItem(menuItemId)?.isChecked = true
+            }
+        })
     }
 }

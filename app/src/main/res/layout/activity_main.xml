@@ -1,20 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0F172A">
 
-    <WebView
-        android:id="@+id/webView"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        style="?android:attr/progressBarStyleHorizontal"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:progressTint="#2563EB"
-        android:visibility="gone" />
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#1E293B"
+        app:itemIconTint="@color/bottom_nav_tint"
+        app:itemTextColor="@color/bottom_nav_tint"
+        app:itemBackground="@android:color/transparent"
+        app:menu="@menu/bottom_nav_menu"
+        app:elevation="8dp"
+        app:labelVisibilityMode="labeled" />
 
-</FrameLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
