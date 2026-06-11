@@ -57,6 +57,23 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onPageFinished(view: WebView?, url: String?) {
                     progressBar.visibility = View.GONE
+                    // Prevent horizontal scrolling
+                    view?.evaluateJavascript(
+                        """
+                        (function() {
+                            document.body.style.overflowX = 'hidden';
+                            document.documentElement.style.overflowX = 'hidden';
+                            var meta = document.querySelector('meta[name="viewport"]');
+                            if (!meta) {
+                                meta = document.createElement('meta');
+                                meta.name = 'viewport';
+                                document.head.appendChild(meta);
+                            }
+                            meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
+                        })();
+                        """.trimIndent(),
+                        null
+                    )
                 }
 
                 override fun shouldOverrideUrlLoading(
