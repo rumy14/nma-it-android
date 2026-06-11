@@ -4,4 +4,5 @@
     <color name="primary_dark">#0F172A</color>
     <color name="text_primary">#F8FAFC</color>
     <color name="background">#0F172A</color>
+    <color name="voice_active">#22C55E</color>
 </resources>

@@ -24,19 +24,34 @@
         app:elevation="8dp"
         app:labelVisibilityMode="labeled" />
 
-    <!-- Chat FAB -->
+    <!-- Vapi Voice FAB (primary) -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/vapiFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:layout_marginBottom="72dp"
+        android:contentDescription="Talk to AI"
+        android:src="@drawable/ic_vapi_fab"
+        android:backgroundTint="#2563EB"
+        app:tint="#FFFFFF"
+        app:fabSize="normal"
+        app:elevation="6dp" />
+
+    <!-- Chat FAB (secondary, stacked above Vapi) -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/chatFab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:layout_marginBottom="72dp"
-        android:contentDescription="Open chat"
+        android:layout_marginBottom="132dp"
+        android:contentDescription="Open text chat"
         android:src="@drawable/ic_chat_fab"
-        android:backgroundTint="#2563EB"
-        app:tint="#FFFFFF"
-        app:fabSize="normal"
-        app:elevation="6dp" />
+        android:backgroundTint="#1E293B"
+        app:tint="#94A3B8"
+        app:fabSize="mini"
+        app:elevation="4dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

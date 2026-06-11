@@ -41,4 +41,5 @@ dependencies {
     implementation("androidx.viewpager2:viewpager2:1.0.0")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
     implementation("androidx.cardview:cardview:1.0.0")
+    implementation("ai.vapi.android:vapi:2.0.3")
 }
