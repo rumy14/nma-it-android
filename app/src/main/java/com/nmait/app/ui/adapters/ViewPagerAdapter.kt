@@ -6,13 +6,15 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.nmait.app.ui.fragments.ContactFragment
 import com.nmait.app.ui.fragments.HomeFragment
 import com.nmait.app.ui.fragments.ServicesFragment
+import com.nmait.app.ui.vapi.VapiVoiceFragment
 
 class ViewPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activity) {
 
     private val tabs = listOf(
         Tab("Home", HomeFragment::class.java),
         Tab("Services", ServicesFragment::class.java),
-        Tab("Contact", ContactFragment::class.java)
+        Tab("Contact", ContactFragment::class.java),
+        Tab("Voice", VapiVoiceFragment::class.java)
     )
 
     override fun getItemCount(): Int = tabs.size
@@ -22,6 +24,7 @@ class ViewPagerAdapter(activity: FragmentActivity) : FragmentStateAdapter(activi
             HomeFragment::class.java -> HomeFragment()
             ServicesFragment::class.java -> ServicesFragment()
             ContactFragment::class.java -> ContactFragment()
+            VapiVoiceFragment::class.java -> VapiVoiceFragment()
             else -> HomeFragment()
         }
     }
