@@ -39,19 +39,19 @@
         app:fabSize="normal"
         app:elevation="6dp" />
 
-    <!-- Chat FAB (secondary, stacked above Vapi) -->
+    <!-- Chat FAB (above Vapi) -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/chatFab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:layout_marginBottom="132dp"
+        android:layout_marginBottom="140dp"
         android:contentDescription="Open text chat"
         android:src="@drawable/ic_chat_fab"
         android:backgroundTint="#1E293B"
-        app:tint="#94A3B8"
-        app:fabSize="mini"
+        app:tint="#F8FAFC"
+        app:fabSize="normal"
         app:elevation="4dp" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
