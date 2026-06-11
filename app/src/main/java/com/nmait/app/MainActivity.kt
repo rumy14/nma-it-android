@@ -78,42 +78,11 @@ class MainActivity : AppCompatActivity() {
             ChatBottomSheetFragment().show(supportFragmentManager, ChatBottomSheetFragment.TAG)
         }
 
-        // ─── Vapi Voice ───
-        vapiManager = VapiVoiceManager(
-            context = this,
-            publicKey = vapiPublicKey,
-            assistantId = vapiAssistantId,
-            onCallStarted = {
-                runOnUiThread {
-                    findViewById<FloatingActionButton>(R.id.vapiFab)
-                        .setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.voice_active))
-                }
-            },
-            onCallEnded = {
-                runOnUiThread {
-                    findViewById<FloatingActionButton>(R.id.vapiFab)
-                        .setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.primary))
-                }
-            },
-            onError = { error ->
-                runOnUiThread {
-                    Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
-                }
-            },
-            onTranscript = { text ->
-                // Optional: use for live captions
-            }
-        )
-        vapiManager.init()
-
+        // ─── Vapi Voice — opens polished bottom sheet ───
         findViewById<FloatingActionButton>(R.id.vapiFab).setOnClickListener {
             if (!checkVapiPermissions()) return@setOnClickListener
-
-            if (vapiManager.isCallActive.value) {
-                vapiManager.stopCall()
-            } else {
-                vapiManager.startCall()
-            }
+            val bottomSheet = com.nmait.app.ui.vapi.VapiBottomSheetFragment()
+            bottomSheet.show(supportFragmentManager, com.nmait.app.ui.vapi.VapiBottomSheetFragment.TAG)
         }
     }
 
@@ -133,11 +102,6 @@ class MainActivity : AppCompatActivity() {
             return false
         }
         return true
-    }
-
-    override fun onDestroy() {
-        vapiManager.destroy()
-        super.onDestroy()
     }
 
     fun switchToTab(position: Int) {
