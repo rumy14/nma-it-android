@@ -96,7 +96,7 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
                     if (ctx == null) return@post
                     Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show()
                     statusText.text = "Try again"
-                    statusText.setTextColor(ContextCompat.getColor(requireContext(), R.color.voice_active))
+                    statusText.setTextColor(ContextCompat.getColor(ctx, R.color.voice_active))
                     startStopIcon.text = "🎤"
                     startStopButton.setBackgroundResource(R.drawable.vapi_start_bg)
                 }
