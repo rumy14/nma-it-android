@@ -27,4 +27,14 @@
     <style name="Widget.NMAIT.BottomSheet" parent="Widget.Material3.BottomSheet">
         <item name="android:background">@android:color/transparent</item>
     </style>
+
+    <!-- Text input style -->
+    <style name="Widget.NMAIT.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
+        <item name="boxBackgroundColor">#1E293B</item>
+        <item name="boxStrokeColor">#334155</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="hintTextColor">#64748B</item>
+        <item name="android:textColorHint">#64748B</item>
+    </style>
 </resources>

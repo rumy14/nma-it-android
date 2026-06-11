@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F172A">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Logo & Branding -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingTop="20dp"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:gravity="center"
+                android:background="@drawable/home_logo_bg"
+                android:text="NMA"
+                android:textColor="#2563EB"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="NMA IT"
+                android:textColor="#F8FAFC"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AI Automation Services"
+                android:textColor="#64748B"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- Quick Action Cards -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="GET STARTED"
+            android:textColor="#2563EB"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:weightSum="3">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                app:cardBackgroundColor="#1E293B"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:id="@+id/actionBookCall">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="📞" android:textSize="24dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <TextView android:text="Book Call" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:layout_marginTop="6dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" />
+                    <TextView android:text="Free consult" android:textColor="#64748B" android:textSize="10sp" android:layout_marginTop="2dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="3dp"
+                app:cardBackgroundColor="#1E293B"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:id="@+id/actionChat">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="💬" android:textSize="24dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <TextView android:text="AI Chat" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:layout_marginTop="6dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" />
+                    <TextView android:text="Ask anything" android:textColor="#64748B" android:textSize="10sp" android:layout_marginTop="2dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                app:cardBackgroundColor="#1E293B"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                android:id="@+id/actionServices">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+                    <TextView android:text="⚙️" android:textSize="24dp" android:layout_width="wrap_content" android:layout_height="wrap_content" />
+                    <TextView android:text="Services" android:textColor="#F8FAFC" android:textSize="12sp" android:textStyle="bold" android:layout_marginTop="6dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" />
+                    <TextView android:text="View plans" android:textColor="#64748B" android:textSize="10sp" android:layout_marginTop="2dp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="center" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <!-- Why NMA IT Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="WHY NMA IT"
+            android:textColor="#2563EB"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:background="#1E293B"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <TextView android:text="✓" android:textColor="#22C55E" android:textSize="16sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Full-stack capability. From chatbots to APIs to WordPress — we cover the stack."
+                android:textColor="#CBD5E1"
+                android:textSize="14sp"
+                android:lineSpacingExtra="4sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:background="#1E293B"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <TextView android:text="✓" android:textColor="#22C55E" android:textSize="16sp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Startup-friendly. Small team, fast delivery, no bureaucracy."
+                android:textColor="#CBD5E1"
+                android:textSize="14sp"
+                android:lineSpacingExtra="4sp" />
+        </LinearLayout>
+
+        <!-- Latest Blog -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="LATEST FROM BLOG"
+            android:textColor="#2563EB"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.15" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="#1E293B"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:id="@+id/latestBlog">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:text="Choosing Your First AI Automation"
+                    android:textColor="#F8FAFC"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:text="A practical guide: $500 to $15K — how to pick the right AI automation project for your business."
+                    android:textColor="#94A3B8"
+                    android:textSize="13sp"
+                    android:layout_marginTop="6dp"
+                    android:lineSpacingExtra="3sp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:text="Read the Guide →"
+                    android:textColor="#2563EB"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="10dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Spacer -->
+        <View android:layout_width="match_parent" android:layout_height="20dp" />
+
+    </LinearLayout>
+</ScrollView>

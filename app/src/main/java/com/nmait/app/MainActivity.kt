@@ -80,4 +80,11 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
+    /** Called by HomeFragment to switch to a different tab */
+    fun switchToTab(position: Int) {
+        if (position in 0..3) {
+            viewPager.setCurrentItem(position, false)
+        }
+    }
 }
