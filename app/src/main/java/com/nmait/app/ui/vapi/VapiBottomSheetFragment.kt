@@ -1,10 +1,15 @@
 package com.nmait.app.ui.vapi
 
+import android.animation.AnimatorSet
+import android.animation.ValueAnimator
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
@@ -23,6 +28,14 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
     private lateinit var startStopIcon: TextView
     private lateinit var muteButton: ImageButton
     private lateinit var closeButton: ImageButton
+    private lateinit var volumeSlider: SeekBar
+    private lateinit var volumeRow: View
+    private lateinit var volumePercent: TextView
+    private lateinit var pulseRingInner: ImageView
+    private lateinit var pulseRingOuter: ImageView
+    private lateinit var avatarContainer: View
+
+    private var pulseAnimator: AnimatorSet? = null
 
     companion object {
         const val TAG = "VapiBottomSheet"
@@ -51,6 +64,12 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
         startStopIcon = view.findViewById(R.id.startStopIcon)
         muteButton = view.findViewById(R.id.muteButton)
         closeButton = view.findViewById(R.id.closeButton)
+        volumeSlider = view.findViewById(R.id.volumeSlider)
+        volumeRow = view.findViewById(R.id.volumeRow)
+        volumePercent = view.findViewById(R.id.volumePercent)
+        pulseRingInner = view.findViewById(R.id.pulseRingInner)
+        pulseRingOuter = view.findViewById(R.id.pulseRingOuter)
+        avatarContainer = view.findViewById(R.id.avatarContainer)
 
         setupVapiManager()
         setupListeners()
@@ -74,6 +93,8 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
                     transcriptText.text = "Speak now..."
                     muteButton.visibility = View.VISIBLE
                     closeButton.visibility = View.VISIBLE
+                    volumeRow.visibility = View.VISIBLE
+                    startPulseAnimation()
                 }
             },
             onCallEnded = {
@@ -88,6 +109,8 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
                     transcriptCard.visibility = View.GONE
                     muteButton.visibility = View.GONE
                     closeButton.visibility = View.GONE
+                    volumeRow.visibility = View.GONE
+                    stopPulseAnimation()
                 }
             },
             onError = { error ->
@@ -96,9 +119,7 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
                     if (ctx == null) return@post
                     Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show()
                     statusText.text = "Try again"
-                    statusText.setTextColor(ContextCompat.getColor(ctx, R.color.voice_active))
-                    startStopIcon.text = "🎤"
-                    startStopButton.setBackgroundResource(R.drawable.vapi_start_bg)
+                    stopPulseAnimation()
                 }
             },
             onTranscript = { text ->
@@ -111,6 +132,50 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
             }
         )
         vapiManager.init()
+    }
+
+    private fun startPulseAnimation() {
+        pulseRingInner?.visibility = View.VISIBLE
+        pulseRingOuter?.visibility = View.VISIBLE
+
+        val innerPulse = createPulseAnimator(pulseRingInner, 1.0f, 1.3f, 1200).apply {
+            repeatCount = ValueAnimator.INFINITE
+        }
+        val outerPulse = createPulseAnimator(pulseRingOuter, 1.0f, 1.25f, 1200).apply {
+            repeatCount = ValueAnimator.INFINITE
+        }
+
+        pulseAnimator = AnimatorSet().apply {
+            playTogether(innerPulse, outerPulse)
+            start()
+        }
+    }
+
+    private fun stopPulseAnimation() {
+        pulseAnimator?.cancel()
+        pulseAnimator = null
+        pulseRingInner?.let {
+            it.visibility = View.GONE
+            it.scaleX = 1.0f; it.scaleY = 1.0f
+        }
+        pulseRingOuter?.let {
+            it.visibility = View.GONE
+            it.scaleX = 1.0f; it.scaleY = 1.0f
+        }
+    }
+
+    private fun createPulseAnimator(target: View, from: Float, to: Float, dur: Long): ValueAnimator {
+        return ValueAnimator.ofFloat(from, to).apply {
+            this.duration = dur
+            interpolator = AccelerateDecelerateInterpolator()
+            addUpdateListener { anim ->
+                val v = anim.animatedValue as Float
+                target.scaleX = v
+                target.scaleY = v
+                target.alpha = (1.0f - (v - from) / (to - from)) * 0.6f
+            }
+            repeatMode = ValueAnimator.REVERSE
+        }
     }
 
     private fun setupListeners() {
@@ -137,9 +202,22 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
             vapiManager.stopCall()
             dismiss()
         }
+
+        volumeSlider?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
+                if (fromUser) volumePercent?.text = "$p%"
+            }
+            override fun onStartTrackingTouch(sb: SeekBar?) {}
+            override fun onStopTrackingTouch(sb: SeekBar?) {
+                val level = (sb?.progress ?: 90) / 100f
+                vapiManager.setVolume(level)
+                volumePercent?.text = "${sb?.progress ?: 90}%"
+            }
+        })
     }
 
     override fun onDestroy() {
+        stopPulseAnimation()
         vapiManager.destroy()
         super.onDestroy()
     }

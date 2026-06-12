@@ -21,6 +21,31 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- Pulse rings (visible during active call) -->
+        <ImageView
+            android:id="@+id/pulseRingOuter"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:src="@drawable/vapi_pulse_ring_outer"
+            android:visibility="gone"
+            android:alpha="0.4"
+            app:layout_constraintBottom_toBottomOf="@id/avatarCircle"
+            app:layout_constraintEnd_toEndOf="@id/avatarCircle"
+            app:layout_constraintStart_toStartOf="@id/avatarCircle"
+            app:layout_constraintTop_toTopOf="@id/avatarCircle" />
+
+        <ImageView
+            android:id="@+id/pulseRingInner"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/vapi_pulse_ring"
+            android:visibility="gone"
+            android:alpha="0.6"
+            app:layout_constraintBottom_toBottomOf="@id/avatarCircle"
+            app:layout_constraintEnd_toEndOf="@id/avatarCircle"
+            app:layout_constraintStart_toStartOf="@id/avatarCircle"
+            app:layout_constraintTop_toTopOf="@id/avatarCircle" />
+
         <!-- Avatar Circle -->
         <LinearLayout
             android:id="@+id/avatarCircle"
@@ -34,6 +59,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <TextView
+                android:id="@+id/avatarIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="🎤"
@@ -145,31 +171,83 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/startStopButton">
 
-            <TextView
-                android:id="@+id/transcriptText"
+            <ScrollView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:gravity="center"
-                android:lineSpacingExtra="6sp"
-                android:padding="20dp"
-                android:text="Speak now..."
-                android:textColor="#E2E8F0"
-                android:textSize="15sp" />
+                android:padding="20dp">
+
+                <TextView
+                    android:id="@+id/transcriptText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:lineSpacingExtra="6sp"
+                    android:text="Speak now..."
+                    android:textColor="#E2E8F0"
+                    android:textSize="15sp" />
+            </ScrollView>
         </androidx.cardview.widget.CardView>
+
+        <!-- Volume slider row (visible during active call) -->
+        <LinearLayout
+            android:id="@+id/volumeRow"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="48dp"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingVertical="8dp"
+            android:paddingHorizontal="12dp"
+            android:background="@drawable/vapi_volume_bg"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/transcriptCard">
+
+            <ImageView
+                android:id="@+id/volumeIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_volume"
+                android:tint="#94A3B8"
+                android:layout_marginEnd="12dp" />
+
+            <SeekBar
+                android:id="@+id/volumeSlider"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="90"
+                android:thumbTint="#2563EB"
+                android:progressTint="#2563EB"
+                android:progressBackgroundTint="#334155" />
+
+            <TextView
+                android:id="@+id/volumePercent"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="90%"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:gravity="end"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
 
         <!-- Control buttons row -->
         <LinearLayout
             android:id="@+id/controlRow"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="20dp"
             android:gravity="center"
             android:orientation="horizontal"
             android:paddingBottom="40dp"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/transcriptCard">
+            app:layout_constraintTop_toBottomOf="@id/volumeRow">
 
             <!-- Mute -->
             <LinearLayout
