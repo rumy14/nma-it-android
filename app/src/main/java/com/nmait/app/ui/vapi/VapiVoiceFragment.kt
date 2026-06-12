@@ -48,7 +48,7 @@ class VapiVoiceFragment : Fragment() {
 
     companion object {
         const val TAG = "VapiVoice"
-        private const val VAPI_PUBLIC_KEY = "903ffb…33f5"
+        private const val VAPI_PUBLIC_KEY = "903ffbab-e2a4-43de-9db6-772c9d2933f5"
         private const val VAPI_ASSISTANT_ID = "93aa1fbb-6ea6-4e35-9af9-fa8bf61af796"
     }
 
