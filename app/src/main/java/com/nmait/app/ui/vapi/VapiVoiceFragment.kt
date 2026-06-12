@@ -1,13 +1,19 @@
 package com.nmait.app.ui.vapi
 
 import android.animation.AnimatorSet
-import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
+import android.content.Context
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
@@ -42,7 +48,7 @@ class VapiVoiceFragment : Fragment() {
 
     companion object {
         const val TAG = "VapiVoice"
-        private const val VAPI_PUBLIC_KEY = "903ffbab-e2a4-43de-9db6-772c9d2933f5"
+        private const val VAPI_PUBLIC_KEY = "903ffb…33f5"
         private const val VAPI_ASSISTANT_ID = "93aa1fbb-6ea6-4e35-9af9-fa8bf61af796"
     }
 
@@ -118,8 +124,8 @@ class VapiVoiceFragment : Fragment() {
         vapiManager.init()
     }
 
-    private fun setCallActiveUI(ctx: android.content.Context) {
-        // Pulse animation
+    private fun setCallActiveUI(ctx: Context) {
+        // Pulse animation starts
         startPulseAnimation()
 
         // Status
@@ -127,30 +133,55 @@ class VapiVoiceFragment : Fragment() {
         statusText.text = "Listening..."
         statusText.setTextColor(ContextCompat.getColor(ctx, R.color.voice_active))
 
-        // Button
+        // Button — smooth scale + fade transition
         startStopIcon.text = "⏹️"
-        startStopButton.setBackgroundResource(R.drawable.vapi_main_btn_active)
+        startStopButton.animate()
+            .scaleX(1.15f).scaleY(1.15f)
+            .setDuration(150)
+            .withEndAction {
+                startStopButton.setBackgroundResource(R.drawable.vapi_main_btn_active)
+                startStopButton.animate()
+                    .scaleX(1.0f).scaleY(1.0f)
+                    .setDuration(200)
+                    .setInterpolator(OvershootInterpolator())
+                    .start()
+
+                // Animate icon in
+                startStopIcon.animate()
+                    .scaleX(1.0f).scaleY(1.0f)
+                    .setDuration(200)
+                    .start()
+            }
+            .start()
 
         // Avatar
         avatarIcon.text = "🤖"
-        animateAvatarActive()
+        animateAvatarPulse(true)
 
-        // Show panels
-        transcriptCard.visibility = View.VISIBLE
-        transcriptText.text = "I'm listening..."
-        volumeRow.visibility = View.VISIBLE
-        controlRow.visibility = View.VISIBLE
-
-        // Sync volume slider with manager
-        val volPercent = (vapiManager.volume.value * 100).toInt()
-        if (!isVolumeDragging) {
-            volumeSlider.progress = volPercent
+        // Show panels with slide-up
+        transcriptCard.apply {
+            alpha = 0f; translationY = 30f; visibility = View.VISIBLE
+            animate().alpha(1f).translationY(0f).setDuration(300).start()
         }
+        transcriptText.text = "I'm listening..."
+
+        volumeRow.apply {
+            alpha = 0f; translationY = 20f; visibility = View.VISIBLE
+            animate().alpha(1f).translationY(0f).setDuration(300).start()
+        }
+
+        controlRow.apply {
+            alpha = 0f; translationY = 20f; visibility = View.VISIBLE
+            animate().alpha(1f).translationY(0f).setDuration(300).start()
+        }
+
+        // Sync volume slider
+        val volPercent = (vapiManager.volume.value * 100).toInt()
+        if (!isVolumeDragging) volumeSlider.progress = volPercent
         volumePercent.text = "$volPercent%"
     }
 
-    private fun setCallIdleUI(ctx: android.content.Context) {
-        // Stop pulse
+    private fun setCallIdleUI(ctx: Context) {
         stopPulseAnimation()
 
         // Status
@@ -158,60 +189,71 @@ class VapiVoiceFragment : Fragment() {
         statusText.text = "Tap to start"
         statusText.setTextColor(ContextCompat.getColor(ctx, R.color.bottom_nav_tint))
 
-        // Button
+        // Button — smooth transition back
         startStopIcon.text = "🎤"
-        startStopButton.setBackgroundResource(R.drawable.vapi_main_btn)
-
-        // Avatar
-        avatarIcon.text = "🎤"
-        animateAvatarIdle()
-
-        // Hide panels
-        transcriptCard.visibility = View.GONE
-        volumeRow.visibility = View.GONE
-        controlRow.visibility = View.GONE
-    }
-
-    /** Animate the avatar with a subtle breathing pulse during active call */
-    private fun animateAvatarActive() {
-        val scaleUp = ObjectAnimator.ofFloat(avatarIcon, "scaleX", 1.0f, 1.15f).apply {
-            duration = 800
-            interpolator = AccelerateDecelerateInterpolator()
-        }
-        val scaleDown = ObjectAnimator.ofFloat(avatarIcon, "scaleY", 1.0f, 1.15f).apply {
-            duration = 800
-            interpolator = AccelerateDecelerateInterpolator()
-        }
-        avatarIcon.animate()
-            .scaleX(1.15f)
-            .scaleY(1.15f)
-            .setDuration(800)
+        startStopButton.animate()
+            .scaleX(1.15f).scaleY(1.15f)
+            .setDuration(150)
             .withEndAction {
-                avatarIcon.animate()
-                    .scaleX(1.0f)
-                    .scaleY(1.0f)
-                    .setDuration(800)
+                startStopButton.setBackgroundResource(R.drawable.vapi_main_btn)
+                startStopButton.animate()
+                    .scaleX(1.0f).scaleY(1.0f)
+                    .setDuration(200)
+                    .setInterpolator(OvershootInterpolator())
                     .start()
             }
             .start()
+
+        // Avatar
+        avatarIcon.text = "🎤"
+        animateAvatarPulse(false)
+
+        // Hide panels with fade-out
+        transcriptCard.animate().alpha(0f).setDuration(200).withEndAction {
+            transcriptCard.visibility = View.GONE
+        }.start()
+        volumeRow.animate().alpha(0f).setDuration(200).withEndAction {
+            volumeRow.visibility = View.GONE
+        }.start()
+        controlRow.animate().alpha(0f).setDuration(200).withEndAction {
+            controlRow.visibility = View.GONE
+        }.start()
     }
 
-    private fun animateAvatarIdle() {
+    /** Avatar breathing animation */
+    private fun animateAvatarPulse(active: Boolean) {
         avatarIcon.clearAnimation()
-        avatarIcon.animate()
-            .scaleX(1.0f)
-            .scaleY(1.0f)
-            .setDuration(300)
-            .start()
+        if (active) {
+            avatarIcon.animate()
+                .scaleX(1.15f).scaleY(1.15f)
+                .setDuration(800)
+                .setInterpolator(AccelerateDecelerateInterpolator())
+                .withEndAction {
+                    avatarIcon.animate()
+                        .scaleX(1.0f).scaleY(1.0f)
+                        .setDuration(800)
+                        .setInterpolator(AccelerateDecelerateInterpolator())
+                        .withEndAction {
+                            if (vapiManager.isCallActive.value) animateAvatarPulse(true)
+                        }
+                        .start()
+                }
+                .start()
+        } else {
+            avatarIcon.animate()
+                .scaleX(1.0f).scaleY(1.0f)
+                .setDuration(300)
+                .start()
+        }
     }
 
-    /** Pulse ring animation */
+    /** Pulse ring animation around avatar */
     private fun startPulseAnimation() {
         pulseRingInner.visibility = View.VISIBLE
         pulseRingOuter.visibility = View.VISIBLE
 
-        val innerPulse = createPulseAnimator(pulseRingInner, 1.0f, 1.3f, 1200)
-        val outerPulse = createPulseAnimator(pulseRingOuter, 1.0f, 1.25f, 1200)
+        val innerPulse = createPulseAnimator(pulseRingInner, 1.0f, 1.4f, 1000)
+        val outerPulse = createPulseAnimator(pulseRingOuter, 1.0f, 1.35f, 1000)
 
         innerPulse.repeatCount = ValueAnimator.INFINITE
         outerPulse.repeatCount = ValueAnimator.INFINITE
@@ -243,14 +285,48 @@ class VapiVoiceFragment : Fragment() {
                 val value = anim.animatedValue as Float
                 target.scaleX = value
                 target.scaleY = value
-                target.alpha = (1.0f - (value - fromScale) / (toScale - fromScale)) * 0.6f
+                target.alpha = (1.0f - (value - fromScale) / (toScale - fromScale)) * 0.5f
             }
             repeatMode = ValueAnimator.REVERSE
         }
     }
 
+    private fun hapticClick() {
+        try {
+            val v = when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                    val vm = requireContext().getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
+                    vm?.defaultVibrator
+                }
+                else -> requireContext().getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+            }
+            if (v != null && v.hasVibrator()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION") v.vibrate(30)
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
     private fun setupListeners() {
         startStopButton.setOnClickListener {
+            hapticClick()
+
+            // Press animation
+            startStopButton.animate()
+                .scaleX(0.85f).scaleY(0.85f)
+                .setDuration(80)
+                .withEndAction {
+                    startStopButton.animate()
+                        .scaleX(1.0f).scaleY(1.0f)
+                        .setDuration(120)
+                        .setInterpolator(OvershootInterpolator())
+                        .start()
+                }
+                .start()
+
             if (vapiManager.isCallActive.value) {
                 vapiManager.stopCall()
             } else {
@@ -262,29 +338,34 @@ class VapiVoiceFragment : Fragment() {
             vapiManager.toggleMute()
             val isMuted = muteIcon.isSelected
             muteIcon.isSelected = !isMuted
-            muteIcon.imageTintList = if (!isMuted) {
-                ContextCompat.getColorStateList(requireContext(), R.color.voice_active)
-            } else {
-                ContextCompat.getColorStateList(requireContext(), R.color.bottom_nav_tint)
-            }
+
+            // Animate mute icon
+            muteIcon.animate()
+                .scaleX(0.7f).scaleY(0.7f)
+                .setDuration(80)
+                .withEndAction {
+                    muteIcon.imageTintList = if (!isMuted) {
+                        ContextCompat.getColorStateList(requireContext(), R.color.voice_active)
+                    } else {
+                        ContextCompat.getColorStateList(requireContext(), R.color.bottom_nav_tint)
+                    }
+                    muteIcon.animate()
+                        .scaleX(1.0f).scaleY(1.0f)
+                        .setDuration(120)
+                        .start()
+                }
+                .start()
         }
 
         view?.findViewById<View>(R.id.hangupButton)?.setOnClickListener {
             vapiManager.stopCall()
         }
 
-        // Volume slider
         volumeSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    volumePercent.text = "$progress%"
-                }
+                if (fromUser) volumePercent.text = "$progress%"
             }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-                isVolumeDragging = true
-            }
-
+            override fun onStartTrackingTouch(seekBar: SeekBar?) { isVolumeDragging = true }
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
                 isVolumeDragging = false
                 val level = (seekBar?.progress ?: 90) / 100f
