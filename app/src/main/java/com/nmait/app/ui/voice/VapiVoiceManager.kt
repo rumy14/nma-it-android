@@ -215,6 +215,25 @@ class VapiVoiceManager(
         }
     }
 
+    /** Toggle speakerphone on/off */
+    fun toggleSpeaker() {
+        try {
+            val am = audioManager ?: return
+            val currentlyOn = am.isSpeakerphoneOn
+            am.isSpeakerphoneOn = !currentlyOn
+            Log.d(TAG, "Speaker toggled: ${!currentlyOn}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Toggle speaker failed", e)
+        }
+    }
+
+    /** Check current speaker state */
+    fun isSpeakerOn(): Boolean {
+        return try {
+            audioManager?.isSpeakerphoneOn ?: false
+        } catch (_: Exception) { false }
+    }
+
     fun destroy() {
         try {
             vapi?.stop()

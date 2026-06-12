@@ -202,12 +202,24 @@
                 android:textSize="28sp" />
         </LinearLayout>
 
+        <!-- Speaker button -->
+        <ImageButton
+            android:id="@+id/speakerButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/vapi_small_btn_bg"
+            android:contentDescription="Speaker"
+            android:src="@drawable/ic_speaker"
+            android:tint="#22C55E"
+            android:visibility="gone" />
+
         <!-- Mute button (hidden until call starts) -->
         <ImageButton
             android:id="@+id/muteButton"
             android:layout_width="44dp"
             android:layout_height="44dp"
-            android:layout_marginStart="24dp"
+            android:layout_marginStart="12dp"
             android:background="@drawable/vapi_small_btn_bg"
             android:contentDescription="Mute"
             android:src="@drawable/ic_mic"

@@ -39,6 +39,8 @@ class VapiVoiceFragment : Fragment() {
     private lateinit var volumePercent: TextView
     private lateinit var muteButton: View
     private lateinit var muteIcon: ImageView
+    private lateinit var speakerButton: View
+    private lateinit var speakerIcon: ImageView
     private lateinit var avatarIcon: TextView
     private lateinit var pulseRingInner: ImageView
     private lateinit var pulseRingOuter: ImageView
@@ -73,6 +75,8 @@ class VapiVoiceFragment : Fragment() {
         volumePercent = view.findViewById(R.id.volumePercent)
         muteButton = view.findViewById(R.id.muteButton)
         muteIcon = muteButton.findViewById<ImageView>(R.id.micIcon)
+        speakerButton = view.findViewById(R.id.speakerButton)
+        speakerIcon = speakerButton.findViewById<ImageView>(R.id.speakerIcon)
         avatarIcon = view.findViewById(R.id.avatarIcon)
         pulseRingInner = view.findViewById(R.id.pulseRingInner)
         pulseRingOuter = view.findViewById(R.id.pulseRingOuter)
@@ -174,6 +178,10 @@ class VapiVoiceFragment : Fragment() {
             alpha = 0f; translationY = 20f; visibility = View.VISIBLE
             animate().alpha(1f).translationY(0f).setDuration(300).start()
         }
+
+        // Speaker icon = green (ON) by default
+        speakerIcon.isSelected = true
+        speakerIcon.imageTintList = ContextCompat.getColorStateList(ctx, R.color.voice_active)
 
         // Sync volume slider
         val volPercent = (vapiManager.volume.value * 100).toInt()
@@ -359,6 +367,17 @@ class VapiVoiceFragment : Fragment() {
 
         view?.findViewById<View>(R.id.hangupButton)?.setOnClickListener {
             vapiManager.stopCall()
+        }
+
+        // Speaker toggle
+        speakerButton.setOnClickListener {
+            vapiManager.toggleSpeaker()
+            val on = vapiManager.isSpeakerOn()
+            speakerIcon.isSelected = on
+            speakerIcon.imageTintList = ContextCompat.getColorStateList(
+                requireContext(), if (on) R.color.voice_active else R.color.bottom_nav_tint
+            )
+            Toast.makeText(requireContext(), if (on) "Speaker ON" else "Speaker OFF", Toast.LENGTH_SHORT).show()
         }
 
         volumeSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

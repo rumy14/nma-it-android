@@ -28,6 +28,7 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
     private lateinit var startStopIcon: TextView
     private lateinit var muteButton: ImageButton
     private lateinit var closeButton: ImageButton
+    private lateinit var speakerButton: ImageButton
     private lateinit var volumeSlider: SeekBar
     private lateinit var volumeRow: View
     private lateinit var volumePercent: TextView
@@ -64,6 +65,7 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
         startStopIcon = view.findViewById(R.id.startStopIcon)
         muteButton = view.findViewById(R.id.muteButton)
         closeButton = view.findViewById(R.id.closeButton)
+        speakerButton = view.findViewById(R.id.speakerButton)
         volumeSlider = view.findViewById(R.id.volumeSlider)
         volumeRow = view.findViewById(R.id.volumeRow)
         volumePercent = view.findViewById(R.id.volumePercent)
@@ -93,6 +95,8 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
                     transcriptText.text = "Speak now..."
                     muteButton.visibility = View.VISIBLE
                     closeButton.visibility = View.VISIBLE
+                    speakerButton.visibility = View.VISIBLE
+                    speakerButton.imageTintList = ContextCompat.getColorStateList(requireContext(), R.color.voice_active)
                     volumeRow.visibility = View.VISIBLE
                     startPulseAnimation()
                 }
@@ -109,6 +113,7 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
                     transcriptCard.visibility = View.GONE
                     muteButton.visibility = View.GONE
                     closeButton.visibility = View.GONE
+                    speakerButton.visibility = View.GONE
                     volumeRow.visibility = View.GONE
                     stopPulseAnimation()
                 }
@@ -119,6 +124,7 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
                     if (ctx == null) return@post
                     Toast.makeText(ctx, error, Toast.LENGTH_SHORT).show()
                     statusText.text = "Try again"
+                    speakerButton.visibility = View.GONE
                     stopPulseAnimation()
                 }
             },
@@ -201,6 +207,14 @@ class VapiBottomSheetFragment : BottomSheetDialogFragment() {
         closeButton.setOnClickListener {
             vapiManager.stopCall()
             dismiss()
+        }
+
+        speakerButton.setOnClickListener {
+            vapiManager.toggleSpeaker()
+            val on = vapiManager.isSpeakerOn()
+            speakerButton.imageTintList = ContextCompat.getColorStateList(
+                requireContext(), if (on) R.color.voice_active else R.color.bottom_nav_tint
+            )
         }
 
         volumeSlider?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

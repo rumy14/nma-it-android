@@ -249,11 +249,32 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/volumeRow">
 
+            <!-- Speaker -->
+            <LinearLayout
+                android:id="@+id/speakerButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/vapi_control_btn"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:id="@+id/speakerIcon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_speaker"
+                    android:tint="#22C55E" />
+            </LinearLayout>
+
             <!-- Mute -->
             <LinearLayout
                 android:id="@+id/muteButton"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
+                android:layout_marginStart="16dp"
                 android:background="@drawable/vapi_control_btn"
                 android:clickable="true"
                 android:focusable="true"
@@ -274,7 +295,7 @@
                 android:id="@+id/hangupButton"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
-                android:layout_marginStart="24dp"
+                android:layout_marginStart="16dp"
                 android:background="@drawable/vapi_hangup_btn"
                 android:clickable="true"
                 android:focusable="true"
