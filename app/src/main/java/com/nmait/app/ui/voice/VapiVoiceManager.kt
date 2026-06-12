@@ -9,22 +9,23 @@ import android.os.Build
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Manages Vapi voice AI sessions.
- * Wraps the Vapi SDK and exposes simple start/stop controls.
- * Uses MODE_IN_COMMUNICATION for optimal VoIP audio routing
- * (loud speaker output + sensitive mic input).
+ * Manages Vapi voice AI sessions with aggressive speakerphone routing.
+ * Continuously forces MODE_IN_COMMUNICATION + speakerphone during calls
+ * to override any internal VAPI SDK audio routing.
  */
 class VapiVoiceManager(
     private val context: Context,
     private val publicKey: String,
     private val assistantId: String,
-    private val volumeLevel: Float = 0.95f,
+    private val volumeLevel: Float = 1.0f,
     private val onCallStarted: () -> Unit = {},
     private val onCallEnded: () -> Unit = {},
     private val onError: (String) -> Unit = {},
@@ -33,6 +34,8 @@ class VapiVoiceManager(
 
     companion object {
         private const val TAG = "VapiVoiceManager"
+        private const val SPEAKER_REFRESH_MS = 800L // Re-apply speaker mode every 800ms
+        private const val VOLUME_TARGET = 1.0f // 100% volume
     }
 
     private var vapi: Vapi? = null
@@ -41,6 +44,7 @@ class VapiVoiceManager(
     private var previousAudioMode = AudioManager.MODE_NORMAL
     private var previousSpeakerphone = false
     private var previousMicMute = false
+    private var speakerWatchdog: Job? = null
     private val scope = CoroutineScope(Dispatchers.Main)
 
     private val _isCallActive = MutableStateFlow(false)
@@ -56,6 +60,14 @@ class VapiVoiceManager(
         try {
             audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
 
+            // Store previous audio settings BEFORE VAPI touches them
+            val am = audioManager
+            if (am != null) {
+                previousAudioMode = am.mode
+                previousSpeakerphone = am.isSpeakerphoneOn
+                previousMicMute = am.isMicrophoneMute
+            }
+
             val configuration = Vapi.Configuration(
                 publicKey = publicKey,
                 host = "api.vapi.ai"
@@ -70,12 +82,16 @@ class VapiVoiceManager(
                         is Vapi.Event.CallDidStart -> {
                             Log.d(TAG, "Call started")
                             _isCallActive.value = true
-                            setupVoipAudio()
+                            // Move audio setup BEFORE UI callback so speaker
+                            // is already active when user hears first word
+                            forceSpeakerLoudest()
+                            startSpeakerWatchdog()
                             onCallStarted()
                         }
                         is Vapi.Event.CallDidEnd -> {
                             Log.d(TAG, "Call ended")
                             _isCallActive.value = false
+                            stopSpeakerWatchdog()
                             restoreAudio()
                             onCallEnded()
                         }
@@ -86,6 +102,7 @@ class VapiVoiceManager(
                         is Vapi.Event.Error -> {
                             Log.e(TAG, "Error: ${event.error}")
                             _isCallActive.value = false
+                            stopSpeakerWatchdog()
                             restoreAudio()
                             onError(event.error)
                         }
@@ -95,6 +112,7 @@ class VapiVoiceManager(
                         is Vapi.Event.Hang -> {
                             Log.d(TAG, "Hang detected")
                             _isCallActive.value = false
+                            stopSpeakerWatchdog()
                             restoreAudio()
                             onCallEnded()
                         }
@@ -108,23 +126,100 @@ class VapiVoiceManager(
         }
     }
 
-    /**
-     * Set up VoIP-style audio routing:
-     * - MODE_IN_COMMUNICATION (VoIP mode — max speaker + sensitive mic)
-     * - Speakerphone ON
-     * - Full audio focus on music stream
-     * - Volume boosted near max
-     */
-    private fun setupVoipAudio() {
+    /** Call BEFORE vapi.start() to establish audio routing early */
+    private fun preCallAudioSetup() {
+        try {
+            val am = audioManager ?: return
+            am.mode = AudioManager.MODE_IN_COMMUNICATION
+            am.isSpeakerphoneOn = true
+            am.isMicrophoneMute = false
+            Log.d(TAG, "Pre-call audio: MODE_IN_COMMUNICATION + speakerphone")
+        } catch (e: Exception) {
+            Log.e(TAG, "Pre-call audio setup failed", e)
+        }
+    }
+
+    /** Aggressively force speakerphone and max volume */
+    private fun forceSpeakerLoudest() {
         try {
             val am = audioManager ?: return
 
-            // Save previous state
-            previousAudioMode = am.mode
-            previousSpeakerphone = am.isSpeakerphoneOn
-            previousMicMute = am.isMicrophoneMute
+            // ─── Audio Focus (HIGHEST PRIORITY) ───
+            requestAudioFocus()
 
-            // ─── Audio Focus (ensure we get the audio path) ───
+            // ─── VoIP Mode (enables full-duplex speaker audio) ───
+            am.mode = AudioManager.MODE_IN_COMMUNICATION
+
+            // ─── Speakerphone ON ───
+            am.isSpeakerphoneOn = true
+
+            // ─── Mic unmuted ───
+            am.isMicrophoneMute = false
+
+            // ─── Speaker route handled by MODE_IN_COMMUNICATION + setSpeakerphoneOn(true) ───
+
+            // ─── Volume: max on ALL relevant streams ───
+            // TARGET_VOLUME_STREAMS.forEach { stream ->
+            //     val max = am.getStreamMaxVolume(stream)
+            //     if (max > 0) am.setStreamVolume(stream, (max * VOLUME_TARGET).toInt().coerceIn(1, max), 0)
+            // }
+
+            val musicMax = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            if (musicMax > 0) {
+                val target = (musicMax * VOLUME_TARGET).toInt().coerceIn(1, musicMax)
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+            }
+
+            val voiceMax = am.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL)
+            if (voiceMax > 0) {
+                am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, voiceMax, 0)
+            }
+
+            // System/alarm stream as backup
+            val alarmMax = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            if (alarmMax > 0) {
+                am.setStreamVolume(AudioManager.STREAM_ALARM, alarmMax, 0)
+            }
+
+            Log.d(TAG, "Speaker forced LOUDEST: mode=COMMUNICATION, speaker=true, speakerDevice=true")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to force speaker", e)
+        }
+    }
+
+    /** Periodic watchdog — re-apply speaker settings in case VAPI overrides them */
+    private fun startSpeakerWatchdog() {
+        speakerWatchdog?.cancel()
+        speakerWatchdog = scope.launch {
+            while (true) {
+                delay(SPEAKER_REFRESH_MS)
+                if (!_isCallActive.value) break
+                try {
+                    val am = audioManager ?: continue
+                    if (am.mode != AudioManager.MODE_IN_COMMUNICATION) {
+                        am.mode = AudioManager.MODE_IN_COMMUNICATION
+                        Log.d(TAG, "Watchdog restored MODE_IN_COMMUNICATION")
+                    }
+                    if (!am.isSpeakerphoneOn) {
+                        am.isSpeakerphoneOn = true
+                        Log.d(TAG, "Watchdog restored speakerphone")
+                    }
+                    if (am.isMicrophoneMute) {
+                        am.isMicrophoneMute = false
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
+    private fun stopSpeakerWatchdog() {
+        speakerWatchdog?.cancel()
+        speakerWatchdog = null
+    }
+
+    private fun requestAudioFocus() {
+        try {
+            val am = audioManager ?: return
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                     .setAudioAttributes(
@@ -134,58 +229,26 @@ class VapiVoiceManager(
                             .build()
                     )
                     .setAcceptsDelayedFocusGain(true)
+                    .setOnAudioFocusChangeListener { }
                     .build()
                 audioFocusRequest = request
                 am.requestAudioFocus(request)
             } else {
                 @Suppress("DEPRECATION")
-                am.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN)
+                am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
             }
-
-            // ─── VoIP Mode ───
-            // MODE_IN_COMMUNICATION routes through the speaker at full volume
-            // and optimizes mic sensitivity for voice pickup
-            am.mode = AudioManager.MODE_IN_COMMUNICATION
-
-            // ─── Force speakerphone ───
-            am.isSpeakerphoneOn = true
-
-            // ─── Ensure mic is unmuted ───
-            am.isMicrophoneMute = false
-
-            // ─── Route audio directly to speaker ───
-            // MODE_IN_COMMUNICATION + speakerphone=true already handles this
-            // on all modern Android versions
-
-            // ─── Boost volume to near max ───
-            val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-            val targetVol = (maxVol * _volume.value).toInt().coerceIn(1, maxVol)
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, targetVol, 0)
-
-            // Also boost voice call stream
-            val maxVoiceVol = am.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL)
-            if (maxVoiceVol > 0) {
-                am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, maxVoiceVol, 0)
-            }
-
-            Log.d(TAG, "VoIP audio: mode=COMMUNICATION, speaker=true, vol=$targetVol/$maxVol")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to set up VoIP audio", e)
-        }
+        } catch (_: Exception) {}
     }
 
-    /** Update volume level without touching the device slider */
     fun setVolume(level: Float) {
         _volume.value = level.coerceIn(0.0f, 1.0f)
         if (_isCallActive.value) {
             try {
                 val am = audioManager ?: return
-                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                val target = (maxVol * _volume.value).toInt().coerceIn(1, maxVol)
+                val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                val target = (max * _volume.value).toInt().coerceIn(1, max)
                 am.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to set volume", e)
-            }
+            } catch (_: Exception) {}
         }
     }
 
@@ -193,14 +256,11 @@ class VapiVoiceManager(
     private fun restoreAudio() {
         try {
             val am = audioManager ?: return
+            stopSpeakerWatchdog()
 
-            // Restore mode
+            // Restore previous state
             am.mode = previousAudioMode
-
-            // Restore speakerphone
             am.isSpeakerphoneOn = previousSpeakerphone
-
-            // Restore mic
             am.isMicrophoneMute = previousMicMute
 
 
@@ -213,7 +273,7 @@ class VapiVoiceManager(
                 am.abandonAudioFocus(null)
             }
 
-            Log.d(TAG, "Audio restored to previous state")
+            Log.d(TAG, "Audio restored")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to restore audio", e)
         }
@@ -225,12 +285,15 @@ class VapiVoiceManager(
             onError("Voice not initialized")
             return
         }
+        // Set audio BEFORE VAPI starts — gives us a head start
+        preCallAudioSetup()
         scope.launch {
             v.start(assistantId = assistantId)
                 .onSuccess { Log.d(TAG, "Call started successfully") }
                 .onFailure { e ->
                     Log.e(TAG, "Call start failed", e)
                     _isCallActive.value = false
+                    stopSpeakerWatchdog()
                     restoreAudio()
                     onError("Failed to start: ${e.message}")
                 }
@@ -241,6 +304,7 @@ class VapiVoiceManager(
     fun stopCall() {
         vapi?.stop()
         _isCallActive.value = false
+        stopSpeakerWatchdog()
         restoreAudio()
     }
 
@@ -257,6 +321,7 @@ class VapiVoiceManager(
     fun destroy() {
         try {
             vapi?.stop()
+            stopSpeakerWatchdog()
             restoreAudio()
         } catch (_: Exception) {}
         vapi = null
